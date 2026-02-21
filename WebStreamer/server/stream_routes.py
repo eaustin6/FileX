@@ -1,17 +1,18 @@
 # Taken from megadlbot_oss <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/webserver/routes.py>
 # Thanks to Eyaadh <https://github.com/eyaadh>
 
+import logging
+import math
+import mimetypes
 import re
 import time
-import math
-import logging
-import secrets
-import mimetypes
+
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
+
+from WebStreamer import StartTime, StreamBot, Var, __version__, utils
 from WebStreamer.bot import multi_clients, work_loads
 from WebStreamer.server.exceptions import FIleNotFound, InvalidHash
-from WebStreamer import Var, utils, StartTime, __version__, StreamBot
 
 logger = logging.getLogger("routes")
 
@@ -27,8 +28,8 @@ async def root_route_handler(_):
             "telegram_bot": "@" + StreamBot.username,
             "connected_bots": len(multi_clients),
             "loads": dict(
-                ("bot" + str(c + 1), l)
-                for c, (_, l) in enumerate(
+                ("bot" + str(c + 1), load)
+                for c, (_, load) in enumerate(
                     sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
                 )
             ),
@@ -36,6 +37,9 @@ async def root_route_handler(_):
         }
     )
 
+@routes.get("/health", allow_head=True)
+async def health_check(_):
+    return web.Response(text="OK", status=200)
 
 @routes.get(r"/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
@@ -63,10 +67,10 @@ class_cache = {}
 
 async def media_streamer(request: web.Request, message_id: int, secure_hash: str):
     range_header = request.headers.get("Range", 0)
-    
+
     index = min(work_loads, key=work_loads.get)
     faster_client = multi_clients[index]
-    
+
     if Var.MULTI_CLIENT:
         logger.info(f"Client {index} is now serving {request.remote}")
 
@@ -77,15 +81,13 @@ async def media_streamer(request: web.Request, message_id: int, secure_hash: str
         logger.debug(f"Creating new ByteStreamer object for client {index}")
         tg_connect = utils.ByteStreamer(faster_client)
         class_cache[faster_client] = tg_connect
-    logger.debug("before calling get_file_properties")
+
     file_id = await tg_connect.get_file_properties(message_id)
-    logger.debug("after calling get_file_properties")
-    
-    
+
     if utils.get_hash(file_id.unique_id, Var.HASH_LENGTH) != secure_hash:
         logger.debug(f"Invalid hash for message with ID {message_id}")
         raise InvalidHash
-    
+
     file_size = file_id.file_size
 
     if range_header:

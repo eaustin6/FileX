@@ -1,11 +1,18 @@
-FROM python:3.9-alpine
+FROM python:3.12-slim
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set work directory
 WORKDIR /app
 
-COPY requirements.txt ./
-
+# Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy project
 COPY . .
 
-CMD ["python3","-m","WebStreamer"]
+# Run the application
+CMD ["python3", "-m", "WebStreamer"]

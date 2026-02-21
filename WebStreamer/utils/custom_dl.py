@@ -1,33 +1,24 @@
-import math
 import asyncio
 import logging
-from WebStreamer import Var
-from typing import Dict, Union
-from WebStreamer.bot import work_loads
-from pyrogram import Client, utils, raw
-from .file_properties import get_file_ids
-from pyrogram.session import Session, Auth
+from typing import AsyncGenerator, Dict, Union
+
+from pyrogram import Client, raw, utils
 from pyrogram.errors import AuthBytesInvalid
-from WebStreamer.server.exceptions import FIleNotFound
 from pyrogram.file_id import FileId, FileType, ThumbnailSource
+from pyrogram.session import Auth, Session
+
+from WebStreamer import Var
+from WebStreamer.bot import work_loads
+from WebStreamer.server.exceptions import FIleNotFound
+
+from .file_properties import get_file_ids
 
 logger = logging.getLogger("streamer")
 
 class ByteStreamer:
     def __init__(self, client: Client):
-        """A custom class that holds the cache of a specific client and class functions.
-        attributes:
-            client: the client that the cache is for.
-            cached_file_ids: a dict of cached file IDs.
-            cached_file_properties: a dict of cached file properties.
-        
-        functions:
-            generate_file_properties: returns the properties for a media of a specific message contained in Tuple.
-            generate_media_session: returns the media session for the DC that contains the media file.
-            yield_file: yield a file from telegram servers for streaming.
-            
-        This is a modified version of the <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/telegram/utils/custom_download.py>
-        Thanks to Eyaadh <https://github.com/eyaadh>
+        """
+        A custom class that holds the cache of a specific client and class functions.
         """
         self.clean_timer = 30 * 60
         self.client: Client = client
@@ -36,19 +27,16 @@ class ByteStreamer:
 
     async def get_file_properties(self, message_id: int) -> FileId:
         """
-        Returns the properties of a media of a specific message in a FIleId class.
-        if the properties are cached, then it'll return the cached results.
-        or it'll generate the properties from the Message ID and cache them.
+        Returns the properties of a media of a specific message in a FileId class.
         """
         if message_id not in self.cached_file_ids:
             await self.generate_file_properties(message_id)
             logger.debug(f"Cached file properties for message with ID {message_id}")
         return self.cached_file_ids[message_id]
-    
+
     async def generate_file_properties(self, message_id: int) -> FileId:
         """
         Generates the properties of a media file on a specific message.
-        returns ths properties in a FIleId class.
         """
         file_id = await get_file_ids(self.client, Var.BIN_CHANNEL, message_id)
         logger.debug(f"Generated file ID and Unique ID for message with ID {message_id}")
@@ -62,8 +50,10 @@ class ByteStreamer:
     async def generate_media_session(self, client: Client, file_id: FileId) -> Session:
         """
         Generates the media session for the DC that contains the media file.
-        This is required for getting the bytes from Telegram servers.
         """
+        # Ensure media_sessions attribute exists
+        if not hasattr(client, "media_sessions"):
+             client.media_sessions = {}
 
         media_session = client.media_sessions.get(file_id.dc_id, None)
 
@@ -119,7 +109,7 @@ class ByteStreamer:
     @staticmethod
     async def get_location(file_id: FileId) -> Union[raw.types.InputPhotoFileLocation,
                                                      raw.types.InputDocumentFileLocation,
-                                                     raw.types.InputPeerPhotoFileLocation,]:
+                                                     raw.types.InputPeerPhotoFileLocation]:
         """
         Returns the file location for the media file.
         """
@@ -170,15 +160,13 @@ class ByteStreamer:
         last_part_cut: int,
         part_count: int,
         chunk_size: int,
-    ) -> Union[str, None]:
+    ) -> AsyncGenerator[bytes, None]:
         """
         Custom generator that yields the bytes of the media file.
-        Modded from <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/telegram/utils/custom_download.py#L20>
-        Thanks to Eyaadh <https://github.com/eyaadh>
         """
         client = self.client
         work_loads[index] += 1
-        logger.debug(f"Starting to yielding file with client {index}.")
+        logger.debug(f"Starting to yield file with client {index}.")
         media_session = await self.generate_media_session(client, file_id)
 
         current_part = 1
@@ -195,7 +183,8 @@ class ByteStreamer:
                     chunk = r.bytes
                     if not chunk:
                         break
-                    elif part_count == 1:
+
+                    if part_count == 1:
                         yield chunk[first_part_cut:last_part_cut]
                     elif current_part == 1:
                         yield chunk[first_part_cut:]
@@ -216,12 +205,13 @@ class ByteStreamer:
                         ),
                     )
         except (TimeoutError, AttributeError):
+            logger.warning("Error yielding file", exc_info=True)
             pass
         finally:
             logger.debug(f"Finished yielding file with {current_part} parts.")
             work_loads[index] -= 1
 
-    
+
     async def clean_cache(self) -> None:
         """
         function to clean the cache to reduce memory usage

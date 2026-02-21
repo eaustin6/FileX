@@ -1,14 +1,15 @@
 # This file is a part of TG-FileStreamBot
 # Coding : Jyothis Jayanth [@EverythingSuckz]
 
-import logging
-from pyrogram import filters, errors
-from WebStreamer.vars import Var
 from urllib.parse import quote_plus
+
+from pyrogram import errors, filters
+from pyrogram.enums.parse_mode import ParseMode
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+
 from WebStreamer.bot import StreamBot, logger
 from WebStreamer.utils import get_hash, get_name
-from pyrogram.enums.parse_mode import ParseMode
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from WebStreamer.vars import Var
 
 
 @StreamBot.on_message(

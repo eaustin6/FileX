@@ -6,6 +6,7 @@ from pyrogram.types import Message
 from WebStreamer import StreamBot, Var
 from WebStreamer.utils.database import db
 from WebStreamer.utils.permissions import is_user_banned
+from WebStreamer.utils import get_readable_file_size
 
 @StreamBot.on_message(filters.command(["start", "help"]) & filters.private)
 async def start(c: Client, m: Message):
@@ -84,15 +85,3 @@ async def premium_handler(c: Client, m: Message):
             "Unlimited usage is available for the owner only.\n\n"
             "Contact: @Owner"
         )
-
-def get_readable_file_size(size_in_bytes) -> str:
-    if size_in_bytes is None:
-        return '0B'
-    index = 0
-    while size_in_bytes >= 1024:
-        size_in_bytes /= 1024
-        index += 1
-    try:
-        return f'{round(size_in_bytes, 2)} {["B", "KB", "MB", "GB", "TB"][index]}'
-    except IndexError:
-        return "File too large"

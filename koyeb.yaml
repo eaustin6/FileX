@@ -13,6 +13,8 @@ env:
     type: secret
   OWNER_ID:
     type: secret
+  FQDN:
+    type: secret
   PORT: 8080
 instance_type: nano
 routes:

@@ -2,9 +2,10 @@ import os
 import unittest
 
 # Set dummy env vars for testing before importing WebStreamer
+# These are strictly for testing purposes and are not real secrets
 os.environ.setdefault("API_ID", "12345")
-os.environ.setdefault("API_HASH", "abcdef123456")
-os.environ.setdefault("BOT_TOKEN", "123456789:abcdefghijklmnopqrstuvwxyz")
+os.environ.setdefault("API_HASH", "test_api_hash")
+os.environ.setdefault("BOT_TOKEN", "12345:test_bot_token")
 os.environ.setdefault("BIN_CHANNEL", "-1001234567890")
 
 from WebStreamer.utils.time_format import get_readable_time

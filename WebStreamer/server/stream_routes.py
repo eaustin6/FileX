@@ -14,7 +14,6 @@ from aiohttp.http_exceptions import BadStatusLine
 from WebStreamer import StartTime, StreamBot, Var, __version__, utils
 from WebStreamer.bot import multi_clients, work_loads
 from WebStreamer.server.exceptions import FileNotFound, InvalidHash
-from WebStreamer.server.exceptions import FIleNotFound, InvalidHash
 from WebStreamer.utils.database import db
 
 logger = logging.getLogger("routes")
@@ -89,38 +88,33 @@ async def health_check(_):
 async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        match = re.search(r"^([0-9a-f]{%s})(\d+)$" % (Var.HASH_LENGTH), path)
-
         user_id_str = request.query.get("id")
+
         if not user_id_str:
-            # Fallback for old links?
-            # If completely new format, we enforce ID.
-            # But maybe allow if Lock Mode is OFF?
-            # No, quota system requires ID.
-            # However, if old link doesn't have ID, maybe default to anonymous or owner? No.
-            # Let's verify if ID is strictly required.
-            raise web.HTTPForbidden(text="Access Denied: User ID missing in link.")
+            raise web.HTTPForbidden(text="Access Denied: User ID missing.")
 
         try:
             user_id = int(user_id_str)
         except ValueError:
-             raise web.HTTPForbidden(text="Access Denied: Invalid User ID.")
+            raise web.HTTPForbidden(text="Access Denied: Invalid User ID.")
 
+        match = re.search(r"^([0-9a-f]{%s})(\d+)$" % (Var.HASH_LENGTH), path)
         if match:
             secure_hash = match.group(1)
             message_id = int(match.group(2))
         else:
-            message_id = int(re.search(r"(\d+)(?:\/\S+)?", path).group(1))
-            secure_hash = request.rel_url.query.get("hash")
-
-        return await media_streamer(request, message_id, secure_hash, user_id)
-            match = re.search(r"(\d+)(?:\/\S+)?", path)
+            match = re.search(r"^(\d+)(?:\/\S+)?$", path)
             if match:
                 message_id = int(match.group(1))
                 secure_hash = request.rel_url.query.get("hash")
             else:
                 raise web.HTTPNotFound()
-        return await media_streamer(request, message_id, secure_hash)
+
+        if not secure_hash:
+             raise InvalidHash
+
+        return await media_streamer(request, message_id, secure_hash, user_id)
+
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
     except FileNotFound as e:
@@ -136,7 +130,6 @@ async def stream_handler(request: web.Request):
 class_cache = {}
 
 async def media_streamer(request: web.Request, message_id: int, secure_hash: str, user_id: int):
-    # Check User & Quota
     user = await db.get_user(user_id)
     if not user:
          raise web.HTTPForbidden(text="Access Denied: User not registered.")
@@ -162,7 +155,6 @@ async def media_streamer(request: web.Request, message_id: int, secure_hash: str
 
     file_id = await tg_connect.get_file_properties(message_id)
 
-    # Verify Hash with user_id to ensure link belongs to user
     if utils.get_hash(file_id.unique_id, Var.HASH_LENGTH, user_id) != secure_hash:
         logger.debug(f"Invalid hash for message with ID {message_id} and User {user_id}")
         raise InvalidHash

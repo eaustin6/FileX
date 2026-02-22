@@ -28,9 +28,19 @@ class Var:
     if not 5 < HASH_LENGTH < 64:
         sys.exit("Hash length should be greater than 5 and less than 64")
     FQDN = str(environ.get("FQDN", BIND_ADDRESS))
-    URL = "http{}://{}{}/".format(
-            "s" if HAS_SSL else "", FQDN, "" if NO_PORT else ":" + str(PORT)
-        )
+    if FQDN == "0.0.0.0":
+        FQDN = "localhost"
+
+    _scheme = "https" if HAS_SSL else "http"
+    _port_str = ""
+    if not NO_PORT:
+        if (HAS_SSL and PORT == 443) or (not HAS_SSL and PORT == 80):
+             _port_str = ""
+        else:
+             _port_str = ":" + str(PORT)
+
+    URL = f"{_scheme}://{FQDN}{_port_str}/"
+
     KEEP_ALIVE = str(environ.get("KEEP_ALIVE", "0").lower()) in  ("1", "true", "t", "yes", "y")
     DEBUG = str(environ.get("DEBUG", "0").lower()) in ("1", "true", "t", "yes", "y")
     USE_SESSION_FILE = str(environ.get("USE_SESSION_FILE", "0").lower()) in ("1", "true", "t", "yes", "y")

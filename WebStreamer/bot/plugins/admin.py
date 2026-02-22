@@ -7,7 +7,7 @@ from pyrogram import filters, Client
 from pyrogram.types import Message
 from WebStreamer import StreamBot, Var, StartTime
 from WebStreamer.utils.database import db
-from WebStreamer.utils import get_readable_time
+from WebStreamer.utils import get_readable_time, get_readable_file_size
 
 @StreamBot.on_message(filters.command("status") & filters.private & filters.user(Var.OWNER_ID))
 async def admin_status(c: Client, m: Message):
@@ -83,15 +83,3 @@ async def gen_key(c: Client, m: Message):
         return await m.reply_text("Invalid amount. Use a number for GB.")
 
     await m.reply_text(msg)
-
-def get_readable_file_size(size_in_bytes) -> str:
-    if size_in_bytes is None:
-        return '0B'
-    index = 0
-    while size_in_bytes >= 1024:
-        size_in_bytes /= 1024
-        index += 1
-    try:
-        return f'{round(size_in_bytes, 2)} {["B", "KB", "MB", "GB", "TB"][index]}'
-    except IndexError:
-        return "File too large"

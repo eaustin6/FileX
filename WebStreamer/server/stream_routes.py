@@ -113,12 +113,21 @@ async def stream_handler(request: web.Request):
             secure_hash = request.rel_url.query.get("hash")
 
         return await media_streamer(request, message_id, secure_hash, user_id)
+            match = re.search(r"(\d+)(?:\/\S+)?", path)
+            if match:
+                message_id = int(match.group(1))
+                secure_hash = request.rel_url.query.get("hash")
+            else:
+                raise web.HTTPNotFound()
+        return await media_streamer(request, message_id, secure_hash)
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
     except FIleNotFound as e:
         raise web.HTTPNotFound(text=e.message)
-    except (AttributeError, BadStatusLine, ConnectionResetError):
+    except (BadStatusLine, ConnectionResetError):
         pass
+    except web.HTTPException:
+        raise
     except Exception as e:
         logger.critical(str(e), exc_info=True)
         raise web.HTTPInternalServerError(text=str(e))

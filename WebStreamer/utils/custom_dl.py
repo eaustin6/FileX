@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import AsyncGenerator, Dict, Union
+from collections.abc import AsyncGenerator
+from typing import Union
 
 from pyrogram import Client, raw, utils
 from pyrogram.errors import AuthBytesInvalid
@@ -22,7 +23,7 @@ class ByteStreamer:
         """
         self.clean_timer = 30 * 60
         self.client: Client = client
-        self.cached_file_ids: Dict[int, FileId] = {}
+        self.cached_file_ids: dict[int, FileId] = {}
         asyncio.create_task(self.clean_cache())
 
     async def get_file_properties(self, message_id: int) -> FileId:
@@ -107,9 +108,9 @@ class ByteStreamer:
 
 
     @staticmethod
-    async def get_location(file_id: FileId) -> Union[raw.types.InputPhotoFileLocation,
-                                                     raw.types.InputDocumentFileLocation,
-                                                     raw.types.InputPeerPhotoFileLocation]:
+    async def get_location(file_id: FileId) -> (raw.types.InputPhotoFileLocation |
+                                                raw.types.InputDocumentFileLocation |
+                                                raw.types.InputPeerPhotoFileLocation):
         """
         Returns the file location for the media file.
         """
@@ -164,6 +165,7 @@ class ByteStreamer:
         """
         Custom generator that yields the bytes of the media file.
         """
+        # Validated AsyncGenerator return type hint
         client = self.client
         work_loads[index] += 1
         logger.debug("Starting to yield file with client %d.", index)

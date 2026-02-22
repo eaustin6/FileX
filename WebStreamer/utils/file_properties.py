@@ -10,12 +10,12 @@ from pyrogram.types import Message
 from WebStreamer.server.exceptions import FIleNotFound
 
 
-async def parse_file_id(message: "Message") -> Optional[FileId]:
+def parse_file_id(message: "Message") -> Optional[FileId]:
     media = get_media_from_message(message)
     if media:
         return FileId.decode(media.file_id)
 
-async def parse_file_unique_id(message: "Messages") -> Optional[str]:
+def parse_file_unique_id(message: "Messages") -> Optional[str]:
     media = get_media_from_message(message)
     if media:
         return media.file_unique_id
@@ -25,8 +25,8 @@ async def get_file_ids(client: Client, chat_id: int, message_id: int) -> Optiona
     if message.empty:
         raise FIleNotFound
     media = get_media_from_message(message)
-    file_unique_id = await parse_file_unique_id(message)
-    file_id = await parse_file_id(message)
+    file_unique_id = parse_file_unique_id(message)
+    file_id = parse_file_id(message)
     setattr(file_id, "file_size", getattr(media, "file_size", 0))
     setattr(file_id, "mime_type", getattr(media, "mime_type", ""))
     setattr(file_id, "file_name", getattr(media, "file_name", ""))

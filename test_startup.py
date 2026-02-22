@@ -17,6 +17,9 @@ try:
     from WebStreamer.bot.plugins import start  # noqa: F401
     print("WebStreamer.bot.plugins.start imported successfully.")
 
+    from WebStreamer.bot.plugins import stream # noqa: F401
+    print("WebStreamer.bot.plugins.stream imported successfully.")
+
 except Exception as e:
     print(f"Error during import: {e}")
     sys.exit(1)

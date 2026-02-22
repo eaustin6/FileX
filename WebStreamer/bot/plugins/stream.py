@@ -9,6 +9,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from WebStreamer.bot import StreamBot, logger
 from WebStreamer.utils.database import db
 from WebStreamer.utils import get_hash, get_name
+from WebStreamer.utils.permissions import is_user_banned, is_user_locked
 from WebStreamer.vars import Var
 
 @StreamBot.on_message(
@@ -49,6 +50,15 @@ async def media_receive_handler(c: Client, m: Message):
 
     try:
         log_msg = await m.forward(chat_id=Var.BIN_CHANNEL)
+async def media_receive_handler(_, m: Message):
+    if is_user_locked(m.from_user.id, m.from_user.username):
+        return await m.reply(
+            "This bot is in **Lock Mode**. Please authorize yourself using `/login <passkey>`.",
+            quote=True
+        )
+
+    if is_user_banned(m.from_user.id, m.from_user.username):
+        return await m.reply("You are not <b>allowed to use</b> this <a href='https://github.com/EverythingSuckz/TG-FileStreamBot'>bot</a>.", quote=True)
 
         # Include user_id in hash generation
         file_hash = get_hash(log_msg, Var.HASH_LENGTH, m.from_user.id)

@@ -7,6 +7,7 @@ from pyrogram.types import Message
 from WebStreamer import StreamBot, Var, StartTime
 from WebStreamer.utils.database import db
 from WebStreamer.utils import get_readable_time
+from WebStreamer.utils.permissions import is_user_banned, is_user_locked
 
 @StreamBot.on_message(filters.command(["start", "help"]) & filters.private)
 async def start(c: Client, m: Message):
@@ -33,6 +34,21 @@ async def start(c: Client, m: Message):
         "Send me a file and I will generate a direct download link for you!\n\n"
         "Use /status to check your quota.\n"
         "Use /premium to buy more quota."
+async def start(_, m: Message):
+    if is_user_locked(m.from_user.id, m.from_user.username):
+        return await m.reply(
+            "This bot is in **Lock Mode**. Please authorize yourself using `/login <passkey>`.",
+            quote=True
+        )
+
+    if is_user_banned(m.from_user.id, m.from_user.username):
+        return await m.reply(
+             "You are not in the allowed list of users who can use me. \
+            ask @bearzap to use me.",
+            disable_web_page_preview=True, quote=True
+        )
+    await m.reply(
+        f'Hello {m.from_user.mention(style="md")},\n\nSend me a file & I will do the rest for you.\n\nJoin @bearzap'
     )
 
 @StreamBot.on_message(filters.command("login") & filters.private)

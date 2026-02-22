@@ -1,0 +1,23 @@
+type: web
+name: tg-filestreambot
+env:
+  API_ID:
+    type: secret
+  API_HASH:
+    type: secret
+  BOT_TOKEN:
+    type: secret
+  BIN_CHANNEL:
+    type: secret
+  DATABASE_URL:
+    type: secret
+  OWNER_ID:
+    type: secret
+  PORT: 8080
+instance_type: nano
+routes:
+  - path: /
+    port: 8080
+build:
+  docker:
+    dockerfile: Dockerfile

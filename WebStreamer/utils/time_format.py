@@ -7,9 +7,11 @@ def get_readable_time(seconds: int) -> str:
         count += 1
         if count < 3:
             remainder, result = divmod(seconds, 60)
-        else:
+        elif count == 3:
             remainder, result = divmod(seconds, 24)
-        if seconds == 0 and remainder == 0:
+        else:
+            remainder, result = 0, seconds
+        if seconds == 0 and remainder == 0 and count > 1:
             break
         time_list.append(int(result))
         seconds = int(remainder)

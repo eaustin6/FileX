@@ -10,12 +10,12 @@ from pyrogram.types import Message
 from WebStreamer.server.exceptions import FIleNotFound
 
 
-async def parse_file_id(message: "Message") -> Optional[FileId]:
+def parse_file_id(message: "Message") -> Optional[FileId]:
     media = get_media_from_message(message)
     if media:
         return FileId.decode(media.file_id)
 
-async def parse_file_unique_id(message: "Messages") -> Optional[str]:
+def parse_file_unique_id(message: "Messages") -> Optional[str]:
     media = get_media_from_message(message)
     if media:
         return media.file_unique_id
@@ -25,8 +25,8 @@ async def get_file_ids(client: Client, chat_id: int, message_id: int) -> Optiona
     if message.empty:
         raise FIleNotFound
     media = get_media_from_message(message)
-    file_unique_id = await parse_file_unique_id(message)
-    file_id = await parse_file_id(message)
+    file_unique_id = parse_file_unique_id(message)
+    file_id = parse_file_id(message)
     setattr(file_id, "file_size", getattr(media, "file_size", 0))
     setattr(file_id, "mime_type", getattr(media, "mime_type", ""))
     setattr(file_id, "file_name", getattr(media, "file_name", ""))
@@ -50,12 +50,16 @@ def get_media_from_message(message: "Message") -> Any:
             return media
 
 
-def get_hash(media_msg: Union[str, Message], length: int) -> str:
+def get_hash(media_msg: Union[str, Message], length: int, user_id: int = 0) -> str:
     if isinstance(media_msg, Message):
         media = get_media_from_message(media_msg)
         unique_id = getattr(media, "file_unique_id", "")
     else:
         unique_id = media_msg
+
+    if user_id:
+        unique_id += str(user_id)
+
     long_hash = hashlib.sha256(unique_id.encode("UTF-8")).hexdigest()
     return long_hash[:length]
 

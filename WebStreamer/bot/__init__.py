@@ -33,3 +33,4 @@ StreamBot = Client(
 
 multi_clients = {}
 work_loads = {}
+authorized_users = set()  # For Lock Mode

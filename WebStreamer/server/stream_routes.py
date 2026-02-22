@@ -21,21 +21,57 @@ routes = web.RouteTableDef()
 
 @routes.get("/", allow_head=True)
 async def root_route_handler(_):
-    return web.json_response(
-        {
-            "server_status": "running",
-            "uptime": utils.get_readable_time(time.time() - StartTime),
-            "telegram_bot": "@" + StreamBot.username,
-            "connected_bots": len(multi_clients),
-            "loads": dict(
-                ("bot" + str(c + 1), load)
-                for c, (_, load) in enumerate(
-                    sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
-                )
-            ),
-            "version": __version__,
-        }
-    )
+    uptime = utils.get_readable_time(time.time() - StartTime)
+    bot_username = "@" + StreamBot.username
+    connected_bots = len(multi_clients)
+
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TG-FileStreamBot Status</title>
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+            .card {{ background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }}
+            .status-ok {{ color: #10b981; font-weight: bold; }}
+            .info-row {{ display: flex; justify-content: space-between; margin: 0.5rem 0; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }}
+            .info-label {{ color: #6b7280; }}
+            .info-value {{ font-weight: 500; color: #111827; }}
+            h1 {{ margin-top: 0; color: #1f2937; }}
+            .footer {{ margin-top: 1.5rem; font-size: 0.875rem; color: #9ca3af; }}
+            a {{ color: #3b82f6; text-decoration: none; }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h1>Bot Status</h1>
+            <p class="status-ok">● System Operational</p>
+            <div class="info-row">
+                <span class="info-label">Bot Username</span>
+                <span class="info-value"><a href="https://t.me/{StreamBot.username}">{bot_username}</a></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Uptime</span>
+                <span class="info-value">{uptime}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Connected Bots</span>
+                <span class="info-value">{connected_bots}</span>
+            </div>
+             <div class="info-row">
+                <span class="info-label">Version</span>
+                <span class="info-value">{__version__}</span>
+            </div>
+            <div class="footer">
+                Powered by <a href="https://github.com/EverythingSuckz/TG-FileStreamBot">TG-FileStreamBot</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return web.Response(text=html, content_type='text/html')
 
 @routes.get("/health", allow_head=True)
 async def health_check(_):

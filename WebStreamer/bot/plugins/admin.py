@@ -66,25 +66,21 @@ async def add_premium(c: Client, m: Message):
 
 @StreamBot.on_message(filters.command("genkey") & filters.private & filters.user(Var.OWNER_ID))
 async def gen_key(c: Client, m: Message):
-    # Usage: /genkey <amount_gb> (for premium) or /genkey access (for login only)
+    # Usage: /genkey <amount_gb>
     if len(m.command) < 2:
-        return await m.reply_text("Usage: /genkey <amount_gb> or /genkey access")
+        return await m.reply_text("Usage: /genkey <amount_gb>")
 
     type_arg = m.command[1]
 
     key = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 
-    if type_arg.lower() == "access":
-        await db.create_pass_key(key, "access")
-        msg = f"Generated Access Key:\n`{key}`\n\nUse /login {key} to authorize."
-    else:
-        try:
-            amount = int(type_arg)
-            bytes_amount = amount * 1024 * 1024 * 1024
-            await db.create_pass_key(key, "premium", bytes_amount)
-            msg = f"Generated Premium Key ({amount}GB):\n`{key}`\n\nUse /login {key} to claim."
-        except ValueError:
-            return await m.reply_text("Invalid amount. Use a number for GB or 'access'.")
+    try:
+        amount = int(type_arg)
+        bytes_amount = amount * 1024 * 1024 * 1024
+        await db.create_pass_key(key, "premium", bytes_amount)
+        msg = f"Generated Premium Key ({amount}GB):\n`{key}`\n\nUse /premium {key} to claim."
+    except ValueError:
+        return await m.reply_text("Invalid amount. Use a number for GB.")
 
     await m.reply_text(msg)
 

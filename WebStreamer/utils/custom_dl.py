@@ -44,8 +44,6 @@ class ByteStreamer:
         if not file_id:
             logger.debug(f"Message with ID {message_id} not found")
             raise FileNotFound
-            logger.debug("Message with ID %d not found", message_id)
-            raise FIleNotFound
         self.cached_file_ids[message_id] = file_id
         logger.debug("Cached media message with ID %d", message_id)
         return self.cached_file_ids[message_id]

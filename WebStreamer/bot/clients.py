@@ -19,10 +19,18 @@ async def initialize_clients():
         (c + 1, t)
         for c, (_, t) in enumerate(
             filter(
-                lambda n: n[0].startswith("MULTI_TOKEN"), sorted(environ.items())
+                lambda n: n[0].startswith("MULTI_TOKEN") and n[0] != "MULTI_TOKENS", sorted(environ.items())
             )
         )
     )
+
+    # Add tokens from MULTI_TOKENS
+    next_id = len(all_tokens) + 1
+    for token in Var.MULTI_TOKENS:
+        if token not in all_tokens.values():
+            all_tokens[next_id] = token
+            next_id += 1
+
     if not all_tokens:
         logger.info("No additional clients found, using default client")
         return

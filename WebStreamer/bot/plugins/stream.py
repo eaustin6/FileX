@@ -1,16 +1,16 @@
 # This file is a part of TG-FileStreamBot
 # Coding : Owner
 
+import asyncio
 from urllib.parse import quote_plus
-from pyrogram import errors, filters, Client
-from pyrogram.enums.parse_mode import ParseMode
+from pyrogram import filters, Client
+from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from WebStreamer.bot import StreamBot, logger
+from WebStreamer import StreamBot, Var
 from WebStreamer.utils.database import db
 from WebStreamer.utils import get_hash, get_name
-from WebStreamer.utils.permissions import is_user_banned, is_user_locked
-from WebStreamer.vars import Var
+from WebStreamer.utils.permissions import is_user_banned
 
 @StreamBot.on_message(
     filters.private
@@ -27,20 +27,18 @@ from WebStreamer.vars import Var
     group=4,
 )
 async def media_receive_handler(c: Client, m: Message):
-    # Check if user exists in DB
-    user = await db.get_user(m.from_user.id)
-    if not user:
-        if Var.LOCK_MODE:
-            await m.reply_text(
-                "This bot is in **Lock Mode**.\n"
-                "Please use `/login <passkey>` to access the bot."
-            )
-            return
-        else:
-            await db.add_user(m.from_user.id)
-            user = await db.get_user(m.from_user.id)
+    if is_user_banned(m.from_user.id, m.from_user.username):
+        return await m.reply(
+             "You are not in the allowed list of users who can use me. \
+            ask @bearzap to use me.",
+            disable_web_page_preview=True, quote=True
+        )
 
-    # Check Quota (Soft check)
+    if not await db.is_user_exist(m.from_user.id):
+        await db.add_user(m.from_user.id)
+
+    user = await db.get_user(m.from_user.id)
+
     if m.from_user.id != Var.OWNER_ID and user['used'] >= user['quota']:
         return await m.reply_text(
             "**Quota Exceeded**\n\n"
@@ -50,24 +48,12 @@ async def media_receive_handler(c: Client, m: Message):
 
     try:
         log_msg = await m.forward(chat_id=Var.BIN_CHANNEL)
-async def media_receive_handler(_, m: Message):
-    if is_user_locked(m.from_user.id, m.from_user.username):
-        return await m.reply(
-            "This bot is in **Lock Mode**. Please authorize yourself using `/login <passkey>`.",
-            quote=True
-        )
 
-    if is_user_banned(m.from_user.id, m.from_user.username):
-        return await m.reply("You are not <b>allowed to use</b> this <a href='https://github.com/EverythingSuckz/TG-FileStreamBot'>bot</a>.", quote=True)
-
-        # Include user_id in hash generation
         file_hash = get_hash(log_msg, Var.HASH_LENGTH, m.from_user.id)
+        file_name = get_name(log_msg)
 
-        # Include user_id in the link query parameters
-        stream_link = f"{Var.URL}{log_msg.id}/{quote_plus(get_name(m))}?hash={file_hash}&id={m.from_user.id}"
+        stream_link = f"{Var.URL}{log_msg.id}/{quote_plus(file_name)}?hash={file_hash}&id={m.from_user.id}"
         short_link = f"{Var.URL}{file_hash}{log_msg.id}?id={m.from_user.id}"
-
-        logger.info(f"Generated link: {stream_link} for {m.from_user.first_name}")
 
         await m.reply_text(
             text="<code>{}</code>\n(<a href='{}'>shortened</a>)".format(
@@ -84,5 +70,4 @@ async def media_receive_handler(_, m: Message):
             ),
         )
     except Exception as e:
-        logger.error(e)
         await m.reply_text(f"Something went wrong!\n\nError: {e}")

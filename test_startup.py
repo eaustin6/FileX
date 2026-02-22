@@ -6,6 +6,7 @@ os.environ["API_ID"] = "12345"
 os.environ["API_HASH"] = "abcdef123456"
 os.environ["BOT_TOKEN"] = "123456789:abcdefghijklmnopqrstuvwxyz"
 os.environ["BIN_CHANNEL"] = "-1001234567890"
+os.environ["DATABASE_URL"] = "mongodb+srv://user:pass@cluster0.mongodb.net/dbname"
 
 try:
     print("Importing WebStreamer...")

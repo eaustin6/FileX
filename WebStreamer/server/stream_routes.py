@@ -6,6 +6,7 @@ import math
 import mimetypes
 import re
 import time
+import asyncio
 
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
@@ -13,6 +14,7 @@ from aiohttp.http_exceptions import BadStatusLine
 from WebStreamer import StartTime, StreamBot, Var, __version__, utils
 from WebStreamer.bot import multi_clients, work_loads
 from WebStreamer.server.exceptions import FIleNotFound, InvalidHash
+from WebStreamer.utils.database import db
 
 logger = logging.getLogger("routes")
 
@@ -24,6 +26,7 @@ async def root_route_handler(_):
     uptime = utils.get_readable_time(time.time() - StartTime)
     bot_username = "@" + StreamBot.username
     connected_bots = len(multi_clients)
+    total_users = await db.total_users_count()
 
     html = f"""
     <!DOCTYPE html>
@@ -60,12 +63,16 @@ async def root_route_handler(_):
                 <span class="info-label">Connected Bots</span>
                 <span class="info-value">{connected_bots}</span>
             </div>
+            <div class="info-row">
+                <span class="info-label">Total Users</span>
+                <span class="info-value">{total_users}</span>
+            </div>
              <div class="info-row">
                 <span class="info-label">Version</span>
                 <span class="info-value">{__version__}</span>
             </div>
             <div class="footer">
-                Powered by <a href="https://github.com/EverythingSuckz/TG-FileStreamBot">TG-FileStreamBot</a>
+                Powered by <a href="https://github.com/Owner/TG-FileStreamBot">TG-FileStreamBot</a>
             </div>
         </div>
     </body>
@@ -82,10 +89,30 @@ async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         match = re.search(r"^([0-9a-f]{%s})(\d+)$" % (Var.HASH_LENGTH), path)
+
+        user_id_str = request.query.get("id")
+        if not user_id_str:
+            # Fallback for old links?
+            # If completely new format, we enforce ID.
+            # But maybe allow if Lock Mode is OFF?
+            # No, quota system requires ID.
+            # However, if old link doesn't have ID, maybe default to anonymous or owner? No.
+            # Let's verify if ID is strictly required.
+            raise web.HTTPForbidden(text="Access Denied: User ID missing in link.")
+
+        try:
+            user_id = int(user_id_str)
+        except ValueError:
+             raise web.HTTPForbidden(text="Access Denied: Invalid User ID.")
+
         if match:
             secure_hash = match.group(1)
             message_id = int(match.group(2))
         else:
+            message_id = int(re.search(r"(\d+)(?:\/\S+)?", path).group(1))
+            secure_hash = request.rel_url.query.get("hash")
+
+        return await media_streamer(request, message_id, secure_hash, user_id)
             match = re.search(r"(\d+)(?:\/\S+)?", path)
             if match:
                 message_id = int(match.group(1))
@@ -107,7 +134,15 @@ async def stream_handler(request: web.Request):
 
 class_cache = {}
 
-async def media_streamer(request: web.Request, message_id: int, secure_hash: str):
+async def media_streamer(request: web.Request, message_id: int, secure_hash: str, user_id: int):
+    # Check User & Quota
+    user = await db.get_user(user_id)
+    if not user:
+         raise web.HTTPForbidden(text="Access Denied: User not registered.")
+
+    if user_id != Var.OWNER_ID and user['used'] >= user['quota']:
+         raise web.HTTPForbidden(text="Access Denied: Quota Exceeded. Contact Owner.")
+
     range_header = request.headers.get("Range", 0)
 
     index = min(work_loads, key=work_loads.get)
@@ -126,8 +161,9 @@ async def media_streamer(request: web.Request, message_id: int, secure_hash: str
 
     file_id = await tg_connect.get_file_properties(message_id)
 
-    if utils.get_hash(file_id.unique_id, Var.HASH_LENGTH) != secure_hash:
-        logger.debug(f"Invalid hash for message with ID {message_id}")
+    # Verify Hash with user_id to ensure link belongs to user
+    if utils.get_hash(file_id.unique_id, Var.HASH_LENGTH, user_id) != secure_hash:
+        logger.debug(f"Invalid hash for message with ID {message_id} and User {user_id}")
         raise InvalidHash
 
     file_size = file_id.file_size
@@ -159,6 +195,14 @@ async def media_streamer(request: web.Request, message_id: int, secure_hash: str
     body = tg_connect.yield_file(
         file_id, index, offset, first_part_cut, last_part_cut, part_count, chunk_size
     )
+
+    async def monitored_body(body_iterator):
+        async for chunk in body_iterator:
+            yield chunk
+            chunk_len = len(chunk)
+            if user_id != Var.OWNER_ID:
+                await db.update_user_used(user_id, chunk_len)
+
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)
     disposition = "attachment"
@@ -171,7 +215,7 @@ async def media_streamer(request: web.Request, message_id: int, secure_hash: str
 
     return web.Response(
         status=206 if range_header else 200,
-        body=body,
+        body=monitored_body(body),
         headers={
             "Content-Type": f"{mime_type}",
             "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",

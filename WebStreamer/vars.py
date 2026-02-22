@@ -1,5 +1,5 @@
 # This file is a part of TG-FileStreamBot
-# Coding : Jyothis Jayanth [@EverythingSuckz]
+# Coding : Owner
 
 import sys
 from os import environ
@@ -40,6 +40,10 @@ class Var:
     LOCK_MODE = str(environ.get("LOCK_MODE", "0").lower()) in ("1", "true", "t", "yes", "y")
     PASSKEY = str(environ.get("PASSKEY", ""))
     OWNER_ID = int(environ.get("OWNER_ID", "0"))
+    DATABASE_URL = str(environ.get('DATABASE_URL'))
+    SESSION_NAME = str(environ.get('SESSION_NAME', 'WebStreamer'))
+    UPDATES_CHANNEL = str(environ.get('UPDATES_CHANNEL', "Telegram"))
+    DEFAULT_QUOTA = int(environ.get("DEFAULT_QUOTA", 2 * 1024 * 1024 * 1024))  # 2 GB
 
     if not API_ID:
         print("API_ID variable is missing! Exiting now")
@@ -55,4 +59,7 @@ class Var:
         sys.exit(1)
     if LOCK_MODE and not PASSKEY:
         print("PASSKEY variable is missing! LOCK_MODE is enabled but no PASSKEY provided. Exiting now")
+        sys.exit(1)
+    if not DATABASE_URL:
+        print("DATABASE_URL variable is missing! Exiting now")
         sys.exit(1)

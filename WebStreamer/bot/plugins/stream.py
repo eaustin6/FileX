@@ -27,8 +27,14 @@ from WebStreamer.vars import Var
     group=4,
 )
 async def media_receive_handler(_, m: Message):
+    # Check Allowed Users
     if Var.ALLOWED_USERS and not ((str(m.from_user.id) in Var.ALLOWED_USERS) or (m.from_user.username in Var.ALLOWED_USERS)):
         return await m.reply("You are not <b>allowed to use</b> this <a href='https://github.com/EverythingSuckz/TG-FileStreamBot'>bot</a>.", quote=True)
+
+    # Check Lock Mode
+    if Var.LOCK_PASSWORD and m.from_user.id not in Var.AUTH_USERS:
+        return await m.reply("This bot is protected. Please use /login <password> to access.", quote=True)
+
     log_msg = await m.forward(chat_id=Var.BIN_CHANNEL)
     file_hash = get_hash(log_msg, Var.HASH_LENGTH)
     stream_link = f"{Var.URL}{log_msg.id}/{quote_plus(get_name(m))}?hash={file_hash}"
@@ -42,7 +48,10 @@ async def media_receive_handler(_, m: Message):
             quote=True,
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Open", url=stream_link)]]
+                [
+                    [InlineKeyboardButton("🔴 Download", url=stream_link)],
+                    [InlineKeyboardButton("🟢 Watch", url=stream_link)]
+                ]
             ),
         )
     except errors.ButtonUrlInvalid:

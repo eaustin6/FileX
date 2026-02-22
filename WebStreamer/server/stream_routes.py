@@ -6,36 +6,38 @@ import math
 import mimetypes
 import re
 import time
+import os
 
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
+from jinja2 import Environment, FileSystemLoader
 
-from WebStreamer import StartTime, StreamBot, Var, __version__, utils
+from WebStreamer import StartTime, Var, __version__, utils
 from WebStreamer.bot import multi_clients, work_loads
 from WebStreamer.server.exceptions import FIleNotFound, InvalidHash
 
 logger = logging.getLogger("routes")
 
+# Setup Jinja2 template environment
+template_dir = os.path.join(os.path.dirname(__file__), "templates")
+env = Environment(loader=FileSystemLoader(template_dir))
 
 routes = web.RouteTableDef()
 
 @routes.get("/", allow_head=True)
 async def root_route_handler(_):
-    return web.json_response(
-        {
-            "server_status": "running",
-            "uptime": utils.get_readable_time(time.time() - StartTime),
-            "telegram_bot": "@" + StreamBot.username,
-            "connected_bots": len(multi_clients),
-            "loads": dict(
-                ("bot" + str(c + 1), load)
-                for c, (_, load) in enumerate(
-                    sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
-                )
-            ),
-            "version": __version__,
-        }
+    uptime = utils.get_readable_time(time.time() - StartTime)
+    connected_bots = len(multi_clients)
+    bandwidth_used = utils.get_readable_file_size(Var.BytesServed)
+
+    template = env.get_template("index.html")
+    html_content = template.render(
+        uptime=uptime,
+        connected_bots=connected_bots,
+        bandwidth_used=bandwidth_used,
+        version=__version__
     )
+    return web.Response(text=html_content, content_type="text/html")
 
 @routes.get("/health", allow_head=True)
 async def health_check(_):

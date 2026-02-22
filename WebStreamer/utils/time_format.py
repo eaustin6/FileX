@@ -20,3 +20,15 @@ def get_readable_time(seconds: int) -> str:
     time_list.reverse()
     readable_time += ": ".join(time_list)
     return readable_time
+
+def get_readable_file_size(size_in_bytes) -> str:
+    if size_in_bytes is None:
+        return '0B'
+    index = 0
+    while size_in_bytes >= 1024:
+        size_in_bytes /= 1024
+        index += 1
+    try:
+        return f'{round(size_in_bytes, 2)}{["B", "KB", "MB", "GB", "TB", "PB"][index]}'
+    except IndexError:
+        return 'File too large'

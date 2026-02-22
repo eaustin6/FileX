@@ -184,6 +184,9 @@ class ByteStreamer:
                     if not chunk:
                         break
 
+                    # Update bandwidth counter
+                    Var.BytesServed += len(chunk)
+
                     if part_count == 1:
                         yield chunk[first_part_cut:last_part_cut]
                     elif current_part == 1:

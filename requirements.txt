@@ -1,5 +1,5 @@
 aiohttp>=3.9.0
-electrogram>=1.5.0
+electrogram>=0.3.222
 python-dotenv>=1.0.0
 TgCrypto>=1.2.5
 uvloop>=0.19.0

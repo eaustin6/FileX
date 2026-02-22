@@ -36,6 +36,11 @@ class Var:
     USE_SESSION_FILE = str(environ.get("USE_SESSION_FILE", "0").lower()) in ("1", "true", "t", "yes", "y")
     ALLOWED_USERS = [x.strip("@ ") for x in str(environ.get("ALLOWED_USERS", "") or "").split(",") if x.strip("@ ")]
 
+    # New variables
+    LOCK_MODE = str(environ.get("LOCK_MODE", "0").lower()) in ("1", "true", "t", "yes", "y")
+    PASSKEY = str(environ.get("PASSKEY", ""))
+    OWNER_ID = int(environ.get("OWNER_ID", "0"))
+
     if not API_ID:
         print("API_ID variable is missing! Exiting now")
         sys.exit(1)
@@ -47,4 +52,7 @@ class Var:
         sys.exit(1)
     if not BIN_CHANNEL:
         print("BIN_CHANNEL variable is missing! Exiting now")
+        sys.exit(1)
+    if LOCK_MODE and not PASSKEY:
+        print("PASSKEY variable is missing! LOCK_MODE is enabled but no PASSKEY provided. Exiting now")
         sys.exit(1)

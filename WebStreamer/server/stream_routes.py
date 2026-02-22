@@ -13,6 +13,7 @@ from aiohttp.http_exceptions import BadStatusLine
 
 from WebStreamer import StartTime, StreamBot, Var, __version__, utils
 from WebStreamer.bot import multi_clients, work_loads
+from WebStreamer.server.exceptions import FileNotFound, InvalidHash
 from WebStreamer.server.exceptions import FIleNotFound, InvalidHash
 from WebStreamer.utils.database import db
 
@@ -122,7 +123,7 @@ async def stream_handler(request: web.Request):
         return await media_streamer(request, message_id, secure_hash)
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
-    except FIleNotFound as e:
+    except FileNotFound as e:
         raise web.HTTPNotFound(text=e.message)
     except (BadStatusLine, ConnectionResetError):
         pass

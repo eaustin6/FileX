@@ -10,7 +10,7 @@ from pyrogram.session import Auth, Session
 
 from WebStreamer import Var
 from WebStreamer.bot import work_loads
-from WebStreamer.server.exceptions import FIleNotFound
+from WebStreamer.server.exceptions import FileNotFound
 
 from .file_properties import get_file_ids
 
@@ -42,6 +42,8 @@ class ByteStreamer:
         file_id = await get_file_ids(self.client, Var.BIN_CHANNEL, message_id)
         logger.debug("Generated file ID and Unique ID for message with ID %d", message_id)
         if not file_id:
+            logger.debug(f"Message with ID {message_id} not found")
+            raise FileNotFound
             logger.debug("Message with ID %d not found", message_id)
             raise FIleNotFound
         self.cached_file_ids[message_id] = file_id

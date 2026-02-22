@@ -50,12 +50,16 @@ def get_media_from_message(message: "Message") -> Any:
             return media
 
 
-def get_hash(media_msg: Union[str, Message], length: int) -> str:
+def get_hash(media_msg: Union[str, Message], length: int, user_id: int = 0) -> str:
     if isinstance(media_msg, Message):
         media = get_media_from_message(media_msg)
         unique_id = getattr(media, "file_unique_id", "")
     else:
         unique_id = media_msg
+
+    if user_id:
+        unique_id += str(user_id)
+
     long_hash = hashlib.sha256(unique_id.encode("UTF-8")).hexdigest()
     return long_hash[:length]
 

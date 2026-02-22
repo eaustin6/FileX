@@ -1,9 +1,8 @@
 # This file is a part of TG-FileStreamBot
-# Coding : Jyothis Jayanth [@EverythingSuckz]
 
 import time
 
-__version__ = 2.23
+__version__ = 3.0
 StartTime = time.time()
 
 from .vars import Var  # noqa: E402

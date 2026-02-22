@@ -1,5 +1,4 @@
 # This file is a part of TG-FileStreamBot
-# Coding : Jyothis Jayanth [@EverythingSuckz]
 
 import asyncio
 import logging
@@ -11,6 +10,7 @@ from pyrogram import idle
 from WebStreamer import StreamBot, utils
 from WebStreamer.bot.clients import initialize_clients
 from WebStreamer.server import web_server
+from WebStreamer.utils.database import db
 
 from .vars import Var
 

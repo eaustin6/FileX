@@ -1,5 +1,4 @@
 # This file is a part of TG-FileStreamBot
-# Coding : Jyothis Jayanth [@EverythingSuckz]
 
 
 import logging
@@ -33,4 +32,4 @@ StreamBot = Client(
 
 multi_clients = {}
 work_loads = {}
-authorized_users = set()  # For Lock Mode
+authorized_users = set()  # For Lock Mode (Legacy/Memory fallback)

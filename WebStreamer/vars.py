@@ -1,5 +1,4 @@
 # This file is a part of TG-FileStreamBot
-# Coding : Jyothis Jayanth [@EverythingSuckz]
 
 import sys
 from os import environ
@@ -40,6 +39,7 @@ class Var:
     LOCK_MODE = str(environ.get("LOCK_MODE", "0").lower()) in ("1", "true", "t", "yes", "y")
     PASSKEY = str(environ.get("PASSKEY", ""))
     OWNER_ID = int(environ.get("OWNER_ID", "0"))
+    DATABASE_URL = str(environ.get("DATABASE_URL", ""))
 
     if not API_ID:
         print("API_ID variable is missing! Exiting now")
@@ -53,6 +53,8 @@ class Var:
     if not BIN_CHANNEL:
         print("BIN_CHANNEL variable is missing! Exiting now")
         sys.exit(1)
-    if LOCK_MODE and not PASSKEY:
-        print("PASSKEY variable is missing! LOCK_MODE is enabled but no PASSKEY provided. Exiting now")
+    # Database is critical now, but we can potentially run without if Lock Mode is just passkey.
+    # However, for credits/quota, DB is mandatory.
+    if not DATABASE_URL:
+        print("DATABASE_URL variable is missing! Exiting now")
         sys.exit(1)

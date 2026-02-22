@@ -1,5 +1,4 @@
-# Taken from megadlbot_oss <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/webserver/routes.py>
-# Thanks to Eyaadh <https://github.com/eyaadh>
+# This file is a part of TG-FileStreamBot
 
 import logging
 import math
@@ -65,7 +64,7 @@ async def root_route_handler(_):
                 <span class="info-value">{__version__}</span>
             </div>
             <div class="footer">
-                Powered by <a href="https://github.com/EverythingSuckz/TG-FileStreamBot">TG-FileStreamBot</a>
+                Powered by TG-FileStreamBot
             </div>
         </div>
     </body>

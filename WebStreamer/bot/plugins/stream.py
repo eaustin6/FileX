@@ -1,5 +1,4 @@
 # This file is a part of TG-FileStreamBot
-# Coding : Jyothis Jayanth [@EverythingSuckz]
 
 from urllib.parse import quote_plus
 
@@ -9,6 +8,8 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from WebStreamer.bot import StreamBot, logger, authorized_users
 from WebStreamer.utils import get_hash, get_name
+from WebStreamer.utils.database import db
+from WebStreamer.utils.file_properties import get_media_from_message
 from WebStreamer.vars import Var
 
 
@@ -27,14 +28,49 @@ from WebStreamer.vars import Var
     group=4,
 )
 async def media_receive_handler(_, m: Message):
-    if Var.LOCK_MODE and not (m.from_user.id in authorized_users or str(m.from_user.id) in Var.ALLOWED_USERS or m.from_user.username in Var.ALLOWED_USERS):
-        return await m.reply(
-            "This bot is in **Lock Mode**. Please authorize yourself using `/login <passkey>`.",
-            quote=True
-        )
+    if not await db.is_user_exist(m.from_user.id):
+        await db.add_user(m.from_user.id)
 
-    if Var.ALLOWED_USERS and not ((str(m.from_user.id) in Var.ALLOWED_USERS) or (m.from_user.username in Var.ALLOWED_USERS)):
-        return await m.reply("You are not <b>allowed to use</b> this <a href='https://github.com/EverythingSuckz/TG-FileStreamBot'>bot</a>.", quote=True)
+    # Lock Mode Check
+    if Var.LOCK_MODE:
+        user = await db.get_user(m.from_user.id)
+        if not user or not user.get('authorized', False):
+             if not (str(m.from_user.id) in Var.ALLOWED_USERS or m.from_user.username in Var.ALLOWED_USERS or m.from_user.id == Var.OWNER_ID):
+                return await m.reply(
+                    "This bot is in **Lock Mode**. Please authorize yourself using `/login <passkey>`.",
+                    quote=True
+                )
+
+    # Quota Check
+    if m.from_user.id != Var.OWNER_ID:
+        user = await db.get_user(m.from_user.id)
+        traffic_used = user.get('traffic_used', 0)
+        traffic_limit = user.get('traffic_limit', 0)
+
+        # If limit is 0, user has no quota.
+        if traffic_limit == 0:
+            return await m.reply(
+                "You have 0 usage quota. Please contact the owner to purchase credits.",
+                quote=True
+            )
+
+        if traffic_used >= traffic_limit:
+            return await m.reply(
+                f"You have exceeded your traffic limit of {traffic_limit} bytes.\n"
+                f"Used: {traffic_used} bytes.\n"
+                f"Please contact owner to increase quota.",
+                quote=True
+            )
+
+        # Update usage (approximate by file size)
+        media = get_media_from_message(m)
+        if isinstance(media, list):
+            file_size = getattr(media[-1], "file_size", 0)
+        else:
+            file_size = getattr(media, "file_size", 0)
+
+        if file_size > 0:
+            await db.update_user_usage(m.from_user.id, file_size)
 
     log_msg = await m.forward(chat_id=Var.BIN_CHANNEL)
     file_hash = get_hash(log_msg, Var.HASH_LENGTH)

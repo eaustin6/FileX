@@ -10,17 +10,18 @@ from pyrogram.types import Message
 from WebStreamer import StreamBot, Var, StartTime, __version__
 from WebStreamer.bot import authorized_users
 from WebStreamer.utils import get_readable_time
+from WebStreamer.utils.permissions import is_user_banned, is_user_locked
 
 
 @StreamBot.on_message(filters.command(["start", "help"]) & filters.private)
 async def start(_, m: Message):
-    if Var.LOCK_MODE and not (m.from_user.id in authorized_users or str(m.from_user.id) in Var.ALLOWED_USERS or m.from_user.username in Var.ALLOWED_USERS):
+    if is_user_locked(m.from_user.id, m.from_user.username):
         return await m.reply(
             "This bot is in **Lock Mode**. Please authorize yourself using `/login <passkey>`.",
             quote=True
         )
 
-    if Var.ALLOWED_USERS and not ((str(m.from_user.id) in Var.ALLOWED_USERS) or (m.from_user.username in Var.ALLOWED_USERS)):
+    if is_user_banned(m.from_user.id, m.from_user.username):
         return await m.reply(
              "You are not in the allowed list of users who can use me. \
             ask @bearzap to use me.",

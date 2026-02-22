@@ -34,14 +34,14 @@ A powerful Telegram Bot to stream files directly to the web with Quota Managemen
 - `BIN_CHANNEL` ID (Create a private channel, add the bot as admin, and get the ID).
 - `DATABASE_URL` (MongoDB Connection String).
 - `OWNER_ID` (Your Telegram User ID).
-- `FQDN` (Your public domain/IP, e.g., `https://myapp.koyeb.app`).
+- `FQDN` (Your public domain/IP, e.g., `myapp.koyeb.app`).
 
 ### Deploy on Koyeb
 
 1. Create an account on [Koyeb](https://koyeb.com).
 2. Create a new App.
 3. Select **GitHub** as the source and choose this repository.
-4. Set the **Environment Variables** listed above. **FQDN is mandatory.**
+4. Set the **Environment Variables** listed above. **FQDN** is required for public access.
 5. Click **Deploy**.
 
 [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/Owner/TG-FileStreamBot&branch=main&env[API_ID]&env[API_HASH]&env[BOT_TOKEN]&env[BIN_CHANNEL]&env[DATABASE_URL]&env[OWNER_ID]&env[FQDN])
@@ -76,7 +76,7 @@ docker run -d -p 8080:8080 \
 - `BIN_CHANNEL`: Channel ID for storing files.
 - `DATABASE_URL`: MongoDB Connection URL.
 - `OWNER_ID`: Your Telegram User ID.
-- `FQDN`: Your server URL (e.g., `https://myapp.koyeb.app` or `http://your-ip`). Required for valid links.
+- `FQDN`: Your server hostname (e.g., `myapp.koyeb.app` or `your-ip`). Required for public access (defaults to localhost).
 - `DEFAULT_QUOTA`: Default quota in bytes (Default 2GB).
 - `PORT`: Port to run the server on (Default 8080).
 - `HAS_SSL`: Set to `True` if using HTTPS (Default `False` unless on cloud providers).

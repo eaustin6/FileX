@@ -28,6 +28,13 @@ class Var:
     if not 5 < HASH_LENGTH < 64:
         sys.exit("Hash length should be greater than 5 and less than 64")
     FQDN = str(environ.get("FQDN", BIND_ADDRESS))
+    if FQDN.startswith("http://"):
+        FQDN = FQDN[7:]
+    elif FQDN.startswith("https://"):
+        FQDN = FQDN[8:]
+    if FQDN.endswith("/"):
+        FQDN = FQDN[:-1]
+
     if FQDN == "0.0.0.0":
         FQDN = "localhost"
 

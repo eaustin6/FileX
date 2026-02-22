@@ -43,7 +43,7 @@ A powerful Telegram Bot to stream files directly to the web with Quota Managemen
 4. Set the **Environment Variables** listed above.
 5. Click **Deploy**.
 
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/EverythingSuckz/TG-FileStreamBot&branch=main&env[API_ID]&env[API_HASH]&env[BOT_TOKEN]&env[BIN_CHANNEL]&env[DATABASE_URL]&env[OWNER_ID])
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/Owner/TG-FileStreamBot&branch=main&env[API_ID]&env[API_HASH]&env[BOT_TOKEN]&env[BIN_CHANNEL]&env[DATABASE_URL]&env[OWNER_ID])
 
 ### Deploy on Heroku
 

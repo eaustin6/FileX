@@ -1,5 +1,5 @@
 # This file is a part of TG-FileStreamBot
-# Coding : Jyothis Jayanth [@EverythingSuckz]
+# Coding : Owner
 
 from urllib.parse import quote_plus
 from pyrogram import errors, filters, Client

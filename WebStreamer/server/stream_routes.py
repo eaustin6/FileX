@@ -72,7 +72,7 @@ async def root_route_handler(_):
                 <span class="info-value">{__version__}</span>
             </div>
             <div class="footer">
-                Powered by <a href="https://github.com/EverythingSuckz/TG-FileStreamBot">TG-FileStreamBot</a>
+                Powered by <a href="https://github.com/Owner/TG-FileStreamBot">TG-FileStreamBot</a>
             </div>
         </div>
     </body>
